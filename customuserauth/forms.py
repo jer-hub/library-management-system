@@ -1,14 +1,13 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth.models import User
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from django.core.exceptions import ValidationError
 from customuserauth.models import CustomUserModel
 
 User = get_user_model()
 
 class CustomAuthenticationForm(AuthenticationForm):     
-    email = forms.EmailField(
+    username = forms.EmailField(
         required=True,
         label="Email",
         widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Email"}),
@@ -24,7 +23,21 @@ class CustomAuthenticationForm(AuthenticationForm):
 
     class Meta:
         model = User
-        fields = ['email', 'password']
+        fields = ['username', 'password']
+
+        def clean(self):
+            cleaned_data = super().clean()
+            email = cleaned_data.get('email')
+            password = cleaned_data.get('password')
+
+            if email and password:
+                user = authenticate(username=email, password=password)
+                if user is None:
+                    raise forms.ValidationError('Invalid email or password')
+            else:
+                raise forms.ValidationError('Both email and password are required')
+            
+            return cleaned_data
 
 
 class RegisterForm(UserCreationForm):
@@ -39,6 +52,22 @@ class RegisterForm(UserCreationForm):
         label="Username",
         widget=forms.TextInput(
             attrs={"class": "form-control", "placeholder": "Username"}
+        ),
+    )
+    first_name = forms.CharField(
+        required=True,
+        max_length=255,
+        label="First Name",
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "First Name"}
+        ),
+    )
+    last_name = forms.CharField(
+        required=True,
+        max_length=255,
+        label="Last Name",
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "Last Name"}
         ),
     )
     password1 = forms.CharField(
@@ -58,7 +87,7 @@ class RegisterForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ["username", "email", "password1", "password2"]
+        fields = ["username", "email", "first_name", "last_name", "password1", "password2"]
 
     def clean_email(self):
         email = self.cleaned_data.get("email")

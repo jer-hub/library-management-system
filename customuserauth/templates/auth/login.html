@@ -21,9 +21,9 @@
                 <form action="{% url 'customuserauth:login' %}" class="d-grid gap-2" method="post">
                     {% csrf_token %}
                     <div>
-                        {{form.email}}
-                        {% if form.email.errors %}
-                        {% for err in form.email.errors %}
+                        {{form.username}}
+                        {% if form.username.errors %}
+                        {% for err in form.username.errors %}
                         <p class="p-0 m-0 text-danger">*{{err}}</p>
                         {% endfor %}
                         {% endif %}
@@ -37,7 +37,11 @@
                         {% endif %}
                     </div>
                     <div>
-                        {{form.errors}}
+                        {% if form.non_field_errors %}
+                        {% for err in form.non_field_errors %}
+                        <p class="p-0 m-0 text-danger">*{{err}}</p>
+                        {% endfor %}
+                        {% endif %}
                     </div>
                     <div class="d-flex justify-content-end">
                         <small>Don't have an account yet? Sign up <a href="{% url 'customuserauth:register' %}"

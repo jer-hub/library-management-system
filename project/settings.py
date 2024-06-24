@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "customuserauth",
+    "management",
 ]
 
 AUTH_USER_MODEL = 'customuserauth.CustomUserModel'

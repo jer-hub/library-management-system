@@ -1,17 +1,18 @@
-from django.views.generic import CreateView
+from django.views.generic import CreateView, View
 from django.shortcuts import render, redirect
-from django.urls import reverse_lazy, reverse
-from django.contrib.auth import authenticate, login
+from django.urls import reverse_lazy
+from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView
 from .models import CustomUserModel
 from .forms import RegisterForm, CustomAuthenticationForm
+from .mixins import RedirectUnauthenticatedUsersMixin
 
 
 # Create your views here.
 class CustomLoginView(LoginView):
     form_class = CustomAuthenticationForm
     template_name = "auth/login.html"
-
+    
     def get_success_url(self):
         return reverse_lazy("home")
 
@@ -43,3 +44,9 @@ def registration(request):
     else:
         form = RegisterForm()
     return render(request, "auth/register.html", {"form": form})
+
+class Logout(View):
+
+    def get(self, request):
+        logout(request)
+        return redirect('home')

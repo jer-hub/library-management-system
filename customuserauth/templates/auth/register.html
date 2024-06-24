@@ -30,6 +30,22 @@
                         {% endif %}
                     </div>
                     <div>
+                        {{form.first_name}}
+                        {% if form.first_name.errors %}
+                        {% for err in form.first_name.errors %}
+                        <p class="p-0 m-0 text-danger">*{{err}}</p>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div>
+                        {{form.last_name}}
+                        {% if form.last_name.errors %}
+                        {% for err in form.last_name.errors %}
+                        <p class="p-0 m-0 text-danger">*{{err}}</p>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div>
                         {{form.email}}
                         {% if form.email.errors %}
                         {% for err in form.email.errors %}
