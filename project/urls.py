@@ -19,10 +19,12 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
 
+from project.views import BookListView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("auth/", include("customuserauth.urls")),
     path("management/", include("management.urls")),
-    path("", TemplateView.as_view(template_name="project/home.html"), name="home"),
+    path("", BookListView.as_view(), name="home"),
 
 ]

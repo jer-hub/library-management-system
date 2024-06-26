@@ -1,11 +1,81 @@
 {% extends 'base.html' %}
 
-{% block title %} Home {% endblock %}
+{% block title %}
+  Home
+{% endblock %}
 
 {% block header %}
-{% include '_partials/navbar.html' %}
+  {% include '_partials/navbar.html' %}
 {% endblock %}
 
 {% block content %}
+  <div>
+    <div>
+      <form action="{% url 'home' %}" method="get" class="d-flex justify-content-center">
+        <div class="d-flex my-3" style="width: 80%;">
+          <input type="text" name="search_book" id="" class="form-control" placeholder="Search title of the book" />
+          <input type="submit" value="search" class="btn btn-success" style="width: 100px;" />
+        </div>
+      </form>
+    </div>
 
+    <table class="table table-hover table-responsive">
+      <thead>
+        <tr>
+          <th>Index</th>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Call Number</th>
+          <th>Pages</th>
+          <th>Place of Publication</th>
+          <th>Copyright Date</th>
+          <th>Department</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for book in books %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ book.title }}</td>
+            <td>{{ book.author }}</td>
+            <td>{{ book.call_number }}</td>
+            <td>{{ book.pages }}</td>
+            <td>{{ book.place_of_publication }}</td>
+            <td>{{ book.copyright_date }}</td>
+            <td>{{ book.department }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <nav aria-label="Page navigation example" class="mt-4">
+      <ul class="pagination">
+        {% if books.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?search={{query}}&page=1" aria-label="First"><span aria-hidden="true">&laquo;&laquo;</span></a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?search={{query}}&page={{ books.previous_page_number }}" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
+          </li>
+        {% endif %} {% for num in books.paginator.page_range %}
+          {% if books.number == num %}
+            <li class="page-item active">
+              <a class="page-link" href="?search={{query}}&page={{ num }}">{{ num }}</a>
+            </li>
+          {% else %}
+            <li class="page-item">
+              <a class="page-link" href="?search={{query}}&page={{ num }}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %} {% if books.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?search={{query}}&page={{ books.next_page_number }}" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?search={{query}}&page={{ books.paginator.num_pages }}" aria-label="Last"><span aria-hidden="true">&raquo;&raquo;</span></a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
 {% endblock %}
