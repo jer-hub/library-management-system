@@ -26,5 +26,6 @@ urlpatterns = [
     path("auth/", include("customuserauth.urls")),
     path("management/", include("management.urls")),
     path("", BookListView.as_view(), name="home"),
+    path("<str:department>/", BookListView.as_view(), name="home"),
 
 ]

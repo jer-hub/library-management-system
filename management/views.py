@@ -11,7 +11,7 @@ from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
 from render_block import render_block_to_string
 from django_htmx.http import HttpResponseLocation
-
+from django.db.models import Q
 # Create your views here.
 
 User = get_user_model()
@@ -40,7 +40,6 @@ class BookManagementView(Is_AdministratorMixin, TemplateView):
         search = request.GET.get("search_book")
         model = Book.objects.all()
         if search:
-            print("got_model")
             context["search_book"]=search
             model = Book.objects.filter(title__contains=search)
         page_number = request.GET.get("page_number")
@@ -134,7 +133,7 @@ class UserManagementView(Is_AdministratorMixin, TemplateView):
         search = self.request.GET.get("search_user")
         page_number = self.request.GET.get("page")
         if search:
-            users = User.objects.filter(first_name__contains=search)
+            users = User.objects.filter(Q(first_name__contains=search) | Q(last_name__contains=search))
         else:
             users = User.objects.all()
         paginated_users = paginated_context(users, 25, page_number, "users", "id")
@@ -182,12 +181,8 @@ class UserManagementView(Is_AdministratorMixin, TemplateView):
         context = {}
         checkedboxes = request.POST.getlist("box")
         User.objects.filter(id__in=checkedboxes).delete()
-        search = request.GET.get("search_user")
         page_number = request.GET.get("page")
-        if search:
-            users = User.objects.filter(first_name__contains=search)
-        else:
-            users = User.objects.all()
+        users = User.objects.all()
         paginated_users = paginated_context(users, 25, page_number, "users", "id")
         context.update(paginated_users)
         return render(request, "management/_partials/list_of_users.html", context)

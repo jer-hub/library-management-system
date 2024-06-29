@@ -9,7 +9,7 @@ class CustomUserModel(AbstractUser):
 
     objects = UserManager()
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ["username"]
     class Meta:
         verbose_name = "User"
         verbose_name_plural = "Users"

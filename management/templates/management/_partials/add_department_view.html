@@ -11,7 +11,6 @@
   <div class="my-5">
     <form action="{% url 'management:form_department_view' %}" method="post">
       {% csrf_token %} {{departmentform.as_p}}
-      {{department_id}}
       <input type="hidden" name="department_id" value="{{department_id}}">
       <div class="d-flex justify-content-end">
         <button class="{{button_css}}">
