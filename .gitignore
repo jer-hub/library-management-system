@@ -1,2 +1,9 @@
+# local virtual environments
 .venv
 venv
+
+# local vscode settings
+.vscode
+
+# local db
+db.sqlite3
