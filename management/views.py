@@ -1,7 +1,7 @@
-from typing import Any
+from typing import Any, Dict
 from django.http import HttpResponse
 from django.urls import reverse
-from customuserauth.mixins import RedirectUnauthenticatedUsersMixin
+from customuserauth.mixins import Is_AdministratorMixin, RedirectUnauthenticatedUsersMixin
 from django.shortcuts import render, redirect, reverse
 from django.views.generic import TemplateView
 from .models import Book, Department
@@ -10,19 +10,45 @@ from customuserauth.forms import RegisterForm, UpdateUserForm
 from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
 from render_block import render_block_to_string
+from django_htmx.http import HttpResponseLocation
 
 # Create your views here.
 
 User = get_user_model()
 
 
-class BookManagementView(RedirectUnauthenticatedUsersMixin, TemplateView):
+class BookManagementView(Is_AdministratorMixin, TemplateView):
     template_name = "management/book_management.html"
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        model = Book.objects.all()
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        search = self.request.GET.get("search_book")
         page_number = self.request.GET.get("page")
-        return paginated_context(model, 25, page_number, "books", "title")
+        if search:
+            books = Book.objects.filter(title__icontains=search)
+        else:
+            books = Book.objects.all()
+        paginated_books = paginated_context(books, 25, page_number, "books", "title")
+        context.update(paginated_books)
+        context["search_book"] = search
+
+        return context
+
+    @classmethod
+    def search_book_list(self, request):
+        context = {}
+        search = request.GET.get("search_book")
+        model = Book.objects.all()
+        if search:
+            print("got_model")
+            context["search_book"]=search
+            model = Book.objects.filter(title__contains=search)
+        page_number = request.GET.get("page_number")
+        context = paginated_context(model, 25, page_number, "books", "title")
+        html = render_block_to_string(
+            "management/book_management.html", "books", context
+        )
+        return HttpResponse(html)
 
     @classmethod
     def form_book_view(self, request):
@@ -45,15 +71,8 @@ class BookManagementView(RedirectUnauthenticatedUsersMixin, TemplateView):
             form = BookForm(request.POST, instance=instance)
             if form.is_valid:
                 form.save()
-            return redirect("management:book_management")
+                return redirect(request.META.get("HTTP_REFERER", "/"))
         return render(request, "management/_partials/add_book_view.html", context)
-
-    @classmethod
-    def back_to_book_list(self, request):
-        model = Book.objects.all().order_by("title")
-        page_number = request.GET.get("page")
-        context = paginated_context(model, 25, page_number, "books", "title")
-        return render(request, "management/_partials/list_of_books.html", context)
 
     @classmethod
     def delete_book(self, request):
@@ -65,7 +84,7 @@ class BookManagementView(RedirectUnauthenticatedUsersMixin, TemplateView):
         return render(request, "management/_partials/list_of_books.html", context)
 
 
-class DepartmentManagementView(RedirectUnauthenticatedUsersMixin, TemplateView):
+class DepartmentManagementView(Is_AdministratorMixin, TemplateView):
     template_name = "management/dept_management.html"
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -94,15 +113,8 @@ class DepartmentManagementView(RedirectUnauthenticatedUsersMixin, TemplateView):
             form = DepartmentForm(request.POST, instance=instance)
             if form.is_valid:
                 form.save()
-            return redirect("management:department_management")
+                return redirect(request.META.get("HTTP_REFERER", "/"))
         return render(request, "management/_partials/add_department_view.html", context)
-
-    @classmethod
-    def back_to_department_list(self, request):
-        model = Department.objects.all().order_by("name")
-        page_number = request.GET.get("page")
-        context = paginated_context(model, 25, page_number, "departments", "name")
-        return render(request, "management/_partials/list_of_departments.html", context)
 
     @classmethod
     def delete_department(self, request):
@@ -114,13 +126,20 @@ class DepartmentManagementView(RedirectUnauthenticatedUsersMixin, TemplateView):
         return render(request, "management/_partials/list_of_departments.html", context)
 
 
-class UserManagementView(RedirectUnauthenticatedUsersMixin, TemplateView):
+class UserManagementView(Is_AdministratorMixin, TemplateView):
     template_name = "management/user_management.html"
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        model = User.objects.all()
+        context = super().get_context_data(**kwargs)
+        search = self.request.GET.get("search_user")
         page_number = self.request.GET.get("page")
-        return paginated_context(model, 25, page_number, "users", "email")
+        if search:
+            users = User.objects.filter(first_name__contains=search)
+        else:
+            users = User.objects.all()
+        paginated_users = paginated_context(users, 25, page_number, "users", "id")
+        context.update(paginated_users)
+        return context
 
     @classmethod
     def form_user_view(self, request):
@@ -133,48 +152,52 @@ class UserManagementView(RedirectUnauthenticatedUsersMixin, TemplateView):
             if request.GET["user_id"]:
                 instance = User.objects.get(id=request.GET["user_id"])
                 context["user_id"] = instance.id
-                context["userform"] = UpdateUserForm(user=instance, instance=instance)
+                context["userform"] = UpdateUserForm(instance=instance)
                 context["button_name"] = "Update"
                 context["button_css"] = "btn btn-info"
 
         if request.method == "POST":
             if request.POST["user_id"]:
                 instance = User.objects.get(id=request.POST["user_id"])
-                form = UpdateUserForm(request.POST, user=instance, instance=instance)
+                form = UpdateUserForm(request.POST, instance=instance)
             else:
                 form = RegisterForm(request.POST)
             if form.is_valid():
                 form.save()
-                response = HttpResponse()
-                response["HX-Redirect"] = reverse("management:user_management")
+                response = HttpResponseLocation(request.META.get("HTTP_REFERER", "/"))
                 return response
             else:
                 context["userform"] = form
-                html = render_block_to_string("management/_partials/add_user_view.html", "userform", context)
+                context["button_name"] = "Update"
+                context["button_css"] = "btn btn-info"
+                html = render_block_to_string(
+                    "management/_partials/add_user_view.html", "userform", context
+                )
                 return HttpResponse(html)
 
         return render(request, "management/_partials/add_user_view.html", context)
 
     @classmethod
-    def back_to_user_list(self, request):
-        model = User.objects.all().order_by("email")
-        page_number = request.GET.get("page")
-        context = paginated_context(model, 25, page_number, "users", "email")
-        return render(request, "management/_partials/list_of_users.html", context)
-
-    @classmethod
     def delete_user(self, request):
+        context = {}
         checkedboxes = request.POST.getlist("box")
         User.objects.filter(id__in=checkedboxes).delete()
-        model = User.objects.all().order_by("email")
+        search = request.GET.get("search_user")
         page_number = request.GET.get("page")
-        context = paginated_context(model, 25, page_number, "users", "email")
+        if search:
+            users = User.objects.filter(first_name__contains=search)
+        else:
+            users = User.objects.all()
+        paginated_users = paginated_context(users, 25, page_number, "users", "id")
+        context.update(paginated_users)
         return render(request, "management/_partials/list_of_users.html", context)
 
 
-def paginated_context(model, page, page_number, context_name, order_by):
-    context = {}
-    obj = model.order_by(order_by)
-    paginator = Paginator(obj, page)
-    context[context_name] = paginator.get_page(page_number)
-    return context
+def paginated_context(queryset, per_page, page_number, context_name, order_by):
+    paginator = Paginator(queryset.order_by(order_by), per_page)
+    page_obj = paginator.get_page(page_number)
+    return {context_name: page_obj}
+
+
+def back_page(request):
+    return redirect(request.META.get("HTTP_REFERER", "/"))

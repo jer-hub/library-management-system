@@ -24,8 +24,19 @@
             <a href="{% url 'customuserauth:login' %}"  class="btn btn-outline-primary me-2">Login</a>
             <a href="{% url 'customuserauth:register' %}" class="btn btn-primary">Sign-up</a>
             {% else %}
-            <a href="{% url 'management:book_management' %}" class="btn btn-outline-info">Management</a>
-            <a href="{% url 'customuserauth:logout' %}" class="btn btn-outline-danger">Log out</a>
+            <div class="d-flex gap-2">
+                <div>
+                    <a href="{% url 'management:book_management' %}" class="btn btn-outline-info">Management</a>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      {{request.user.email}}
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li><a href="{% url 'customuserauth:logout' %}" class="dropdown-item">Log out</a></li>
+                    </ul>
+                  </div>
+            </div>
             {% endif %}
         </div>
     </header>

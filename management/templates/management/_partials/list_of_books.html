@@ -39,17 +39,25 @@
     </div>
   </div>
   <div>
+    <form action="{% url 'management:book_management' %}" class="d-flex justify-content-center" method="get">
+      <div class="d-flex my-3" style="width: 80%;">
+        <input type="text" name="search_book" id="" class="form-control" placeholder="Search title of the book" value="{{ request.GET.search_book }}" />
+        <input type="submit" value="search" class="btn btn-success" style="width: 100px;" />
+      </div>
+    </form>
+  </div>
+  <div>
     <form id="bookform">
-    <table class="table table-hover">
-      <thead>
-        <tr>
-          <th></th>
-          <th>Title</th>
-          <th>Author</th>
-          <th>Call Number</th>
-        </tr>
-      </thead>
-      <tbody>
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Call Number</th>
+          </tr>
+        </thead>
+        <tbody>
           {% for book in books %}
           <tr>
             <td>{{forloop.counter}}</td>
@@ -81,32 +89,32 @@
       <ul class="pagination">
         {% if books.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?page=1" aria-label="First">
+          <a class="page-link" href="?page=1{% if request.GET.search_book %}&search_book={{ request.GET.search_book }}{% endif %}" aria-label="First">
             <span aria-hidden="true">&laquo;&laquo;</span>
           </a>
         </li>
         <li class="page-item">
-          <a class="page-link" href="?page={{ books.previous_page_number }}" aria-label="Previous">
+          <a class="page-link" href="?page={{ books.previous_page_number }}{% if request.GET.search_book %}&search_book={{ request.GET.search_book }}{% endif %}" aria-label="Previous">
             <span aria-hidden="true">&laquo;</span>
           </a>
         </li>
         {% endif %} {% for num in books.paginator.page_range %}
         {% if books.number == num %}
         <li class="page-item active">
-          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+          <a class="page-link" href="?page={{ num }}{% if request.GET.search_book %}&search_book={{ request.GET.search_book }}{% endif %}">{{ num }}</a>
         </li>
         {% else %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+          <a class="page-link" href="?page={{ num }}{% if request.GET.search_book %}&search_book={{ request.GET.search_book }}{% endif %}">{{ num }}</a>
         </li>
         {% endif %} {% endfor %} {% if books.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ books.next_page_number }}" aria-label="Next">
+          <a class="page-link" href="?page={{ books.next_page_number }}{% if request.GET.search_book %}&search_book={{ request.GET.search_book }}{% endif %}" aria-label="Next">
             <span aria-hidden="true">&raquo;</span>
           </a>
         </li>
         <li class="page-item">
-          <a class="page-link" href="?page={{ books.paginator.num_pages }}" aria-label="Last">
+          <a class="page-link" href="?page={{ books.paginator.num_pages }}{% if request.GET.search_book %}&search_book={{ request.GET.search_book }}{% endif %}" aria-label="Last">
             <span aria-hidden="true">&raquo;&raquo;</span>
           </a>
         </li>

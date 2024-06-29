@@ -84,8 +84,3 @@ class DepartmentForm(ModelForm):
     class Meta:
         model = Department
         fields = ("name",)
-
-class UserForm(ModelForm):
-    class Meta:
-        model = User
-        fields = "__all__"

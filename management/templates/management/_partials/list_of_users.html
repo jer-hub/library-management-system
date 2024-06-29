@@ -8,8 +8,7 @@
         hx-target="#user_view" 
         hx-vals='{
           "user_id": ""
-        }'
-        hx-push-url="true">
+        }'>
         Add User
       </button>
       <button class="btn btn-danger" 
@@ -38,6 +37,14 @@
         </svg>
       </button>
     </div>
+  </div>
+  <div>
+    <form action="{% url 'management:user_management' %}" class="d-flex justify-content-center" method="get">
+      <div class="d-flex my-3" style="width: 80%;">
+        <input type="text" name="search_user" id="" class="form-control" placeholder="Search name of the user" value="{{ request.GET.search_user }}" />
+        <input type="submit" value="search" class="btn btn-success" style="width: 100px;" />
+      </div>
+    </form>
   </div>
   <div>
     <form id="userform">
@@ -79,32 +86,32 @@
       <ul class="pagination">
         {% if users.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?page=1" aria-label="First">
+          <a class="page-link" href="?page=1{% if request.GET.search_user %}&search_user={{ request.GET.search_user }}{% endif %}" aria-label="First">
             <span aria-hidden="true">&laquo;&laquo;</span>
           </a>
         </li>
         <li class="page-item">
-          <a class="page-link" href="?page={{ users.previous_page_number }}" aria-label="Previous">
+          <a class="page-link" href="?page={{ users.previous_page_number }}{% if request.GET.search_user %}&search_user={{ request.GET.search_user }}{% endif %}" aria-label="Previous">
             <span aria-hidden="true">&laquo;</span>
           </a>
         </li>
         {% endif %} {% for num in users.paginator.page_range %}
         {% if users.number == num %}
         <li class="page-item active">
-          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+          <a class="page-link" href="?page={{ num }}{% if request.GET.search_user %}&search_user={{ request.GET.search_user }}{% endif %}">{{ num }}</a>
         </li>
         {% else %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+          <a class="page-link" href="?page={{ num }}{% if request.GET.search_user %}&search_user={{ request.GET.search_user }}{% endif %}">{{ num }}</a>
         </li>
         {% endif %} {% endfor %} {% if users.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ users.next_page_number }}" aria-label="Next">
+          <a class="page-link" href="?page={{ users.next_page_number }}{% if request.GET.search_user %}&search_user={{ request.GET.search_user }}{% endif %}" aria-label="Next">
             <span aria-hidden="true">&raquo;</span>
           </a>
         </li>
         <li class="page-item">
-          <a class="page-link" href="?page={{ users.paginator.num_pages }}" aria-label="Last">
+          <a class="page-link" href="?page={{ users.paginator.num_pages }}{% if request.GET.search_user %}&search_user={{ request.GET.search_user }}{% endif %}" aria-label="Last">
             <span aria-hidden="true">&raquo;&raquo;</span>
           </a>
         </li>

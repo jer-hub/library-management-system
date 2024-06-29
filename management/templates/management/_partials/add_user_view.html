@@ -2,10 +2,12 @@
   <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-arrow-left-square" viewBox="0 0 16 16">
     <path fill-rule="evenodd" d="M15 2a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1zM0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm11.5 5.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5z" />
   </svg>
-  <a href="#" class="link-secondary link-underline link-underline-opacity-0" hx-get="{% url 'management:user_list' %}" hx-swap="outerHTML" hx-target="#user_view"><h5>Back</h5></a>
+  <a href="{% url 'management:back_page' %}" class="link-secondary link-underline link-underline-opacity-0">
+    <h5>Back</h5>
+  </a>
 </div>
 <div class="my-5">
-  <form hx-post="{% url 'management:form_user_view' %}" hx-target="#userform" hx-swap="innerHTML">
+  <form hx-post="{% url 'management:form_user_view' %}" hx-swap="outerHTML" hx-target="#userform">
     {% block userform %}
       <div id="userform">
         <div>
@@ -44,6 +46,22 @@
             {% endfor %}
           {% endif %}
         </div>
+        <div>
+          <div>
+            <label>Roles:</label>
+          </div>
+          <div class="form-check">
+            {{ userform.is_administrator }}
+            <label class="form-check-label" for="id_is_administrator">
+              {{ userform.is_administrator.label }}
+            </label>
+          </div>
+          {% if userform.is_administrator.errors %}
+            {% for err in userform.is_administrator.errors %}
+              <p class="p-0 m-0 text-danger">*{{ err }}</p>
+            {% endfor %}
+          {% endif %}
+        </div>
         {% if userform.password1 and userform.password2 %}
           <div>
             <label for="id_password1">Password:</label>
@@ -68,7 +86,7 @@
     {% endblock %}
 
     <input type="hidden" name="user_id" value="{{ user_id }}" />
-    <div class="d-flex justify-content-end">
+    <div class="d-flex justify-content-end my-3">
       <button class="{{ button_css }}">{{ button_name }}</button>
     </div>
   </form>

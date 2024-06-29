@@ -1,12 +1,14 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from customuserauth.models import CustomUserModel
 
 User = get_user_model()
 
-class CustomAuthenticationForm(AuthenticationForm):     
+
+class CustomAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(
         required=True,
         label="Email",
@@ -20,31 +22,35 @@ class CustomAuthenticationForm(AuthenticationForm):
         ),
     )
 
-
     class Meta:
         model = User
-        fields = ['username', 'password']
+        fields = ["username", "password"]
 
         def clean(self):
             cleaned_data = super().clean()
-            email = cleaned_data.get('email')
-            password = cleaned_data.get('password')
+            email = cleaned_data.get("email")
+            password = cleaned_data.get("password")
 
             if email and password:
                 user = authenticate(username=email, password=password)
                 if user is None:
-                    raise forms.ValidationError('Invalid email or password')
+                    raise forms.ValidationError("Invalid email or password")
             else:
-                raise forms.ValidationError('Both email and password are required')
-            
+                raise forms.ValidationError("Both email and password are required")
+
             return cleaned_data
 
 
 class RegisterForm(UserCreationForm):
+
+    def __init__(self, *args, **kwargs):
+        super(RegisterForm, self).__init__(*args, **kwargs)
+        del self.fields['email'].widget.attrs['autofocus']
+    
     email = forms.EmailField(
         required=True,
         label="Email",
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Email"}),
+        widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "Email"}),
     )
     username = forms.CharField(
         required=True,
@@ -84,10 +90,22 @@ class RegisterForm(UserCreationForm):
             attrs={"class": "form-control", "placeholder": "Confirm Password"}
         ),
     )
+    is_administrator = forms.BooleanField(label="Make Administrator" ,required=False, widget=forms.CheckboxInput(attrs={
+        "class": "form-check-input"
+    }))
+    
 
     class Meta:
         model = User
-        fields = ["username", "email", "first_name", "last_name", "password1", "password2"]
+        fields = [
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "password1",
+            "password2",
+            "is_administrator"
+        ]
 
     def clean_email(self):
         email = self.cleaned_data.get("email")
@@ -110,12 +128,24 @@ class RegisterForm(UserCreationForm):
             self.add_error("password2", "Passwords do not match.")
 
         return cleaned_data
-    
+
+    def save(self, commit=True):
+        user = super(RegisterForm, self).save(commit=False)
+        if commit:
+            user.save()
+            if self.cleaned_data["is_administrator"]:
+                admin_group = Group.objects.get(name="Administrators")
+                admin_group.user_set.add(user)
+        return user
+
 class UpdateUserForm(forms.ModelForm):
+
     email = forms.EmailField(
         required=True,
         label="Email",
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Email"}),
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "Email"}
+            ),
     )
     username = forms.CharField(
         required=True,
@@ -142,13 +172,21 @@ class UpdateUserForm(forms.ModelForm):
         ),
     )
 
+    is_administrator = forms.BooleanField(label="Make Administrator" ,required=False, widget=forms.CheckboxInput(attrs={
+        "class": "form-check-input"
+    }))
+
     class Meta:
         model = User
-        fields = ["username", "email", "first_name", "last_name"]
+        fields = ["username", "email", "first_name", "last_name", "is_administrator"]
 
     def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        # del self.fields['email'].widget.attrs["autofocus"]
+        self.user = kwargs.get("instance", False)
+        user = kwargs.get("instance", False)
+        if user:
+            self.initial["is_administrator"] = user.groups.filter(name="Administrators").exists()
 
     def clean_email(self):
         email = self.cleaned_data.get("email")
@@ -161,3 +199,15 @@ class UpdateUserForm(forms.ModelForm):
         if User.objects.filter(username=username).exclude(pk=self.user.pk).exists():
             raise ValidationError("Username already exists.")
         return username
+
+    def save(self, commit=True):
+        user = super(UpdateUserForm, self).save(commit=False)
+        if commit:
+            user.save()
+            if self.cleaned_data["is_administrator"]:
+                admin_group = Group.objects.get(name="Administrators")
+                admin_group.user_set.add(user)
+            else:
+                admin_group = Group.objects.get(name="Administrators")
+                admin_group.user_set.remove(user)
+        return user
